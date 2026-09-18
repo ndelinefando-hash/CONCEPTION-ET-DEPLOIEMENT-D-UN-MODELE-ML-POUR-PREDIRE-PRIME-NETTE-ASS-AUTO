@@ -63,7 +63,9 @@ export const fcfa = (v: number, digits = 0) =>
 const API_URL = import.meta.env.VITE_ML_API_URL || "http://localhost:8000";
 
 
-export async function predirePrime(input: PrimeInput): Promise<PredictionResult> {
+export async function predirePrime(
+  input: PrimeInput
+): Promise<PredictionResult> {
   const response = await fetch(`${API_URL}/predict`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -72,26 +74,28 @@ export async function predirePrime(input: PrimeInput): Promise<PredictionResult>
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.detail || "Le service du modèle n'est pas disponible.");
+    throw new Error(
+      body.detail || "Le service du modèle n'est pas disponible."
+    );
   }
 
   const data = await response.json();
 
-  // Sauvegarde de la prédiction complète pour la page d'explicabilité
+  // Conservation de la réponse complète :
+  // prédiction + SHAP + données d'entrée
   localStorage.setItem(
     "tariface_last_prediction",
     JSON.stringify(data)
   );
 
-  // Adaptation de la réponse API au format attendu par le simulateur
+  // Adaptation de la réponse FastAPI au format attendu par le simulateur
   return {
-    prime_nette_fcfa: data.prediction?.value ?? 0,
-    modele: data.prediction?.model ?? "Random Forest",
+    prime_nette_fcfa: Number(data.prediction?.value ?? 0),
+    modele: "Random Forest",
     cible: data.prediction?.target ?? "primnett",
     historique_sinistres_fcfa: input.cout_total_sinistres,
     message:
-      data.prediction?.message ??
-      "Prime nette estimée à partir du modèle final.",
+      "Prime nette estimée à partir du modèle final Random Forest.",
   };
 }
 
